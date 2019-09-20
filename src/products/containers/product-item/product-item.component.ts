@@ -1,54 +1,64 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit } from "@angular/core";
 
 import { Store } from "@ngrx/store";
 import { Observable } from "rxjs";
-import * as fromStore from '../../store';
+import { tap } from "rxjs/operators";
+import * as fromStore from "../../store";
 
-import { Pizza } from '../../models/pizza.model';
-import { Topping } from '../../models/topping.model';
+import { Pizza } from "../../models/pizza.model";
+import { Topping } from "../../models/topping.model";
+import { from } from "rxjs/observable/from";
 
 @Component({
-  selector: 'product-item',
-  styleUrls: ['product-item.component.scss'],
+  selector: "product-item",
+  styleUrls: ["product-item.component.scss"],
   template: `
-    <div
-      class="product-item">
+    <div class="product-item">
       <pizza-form
         [pizza]="pizza$ | async"
-        [toppings]="toppings"
+        [toppings]="toppings$ | async"
         (selected)="onSelect($event)"
         (create)="onCreate($event)"
         (update)="onUpdate($event)"
-        (remove)="onRemove($event)">
-        <pizza-display
-          [pizza]="visualise">
-        </pizza-display>
+        (remove)="onRemove($event)"
+      >
+        <pizza-display [pizza]="visualise$ | async"> </pizza-display>
       </pizza-form>
     </div>
-  `,
+  `
 })
 export class ProductItemComponent implements OnInit {
   pizza$: Observable<Pizza>;
-  visualise: Pizza;
-  toppings: Topping[];
+  visualise$: Observable<Pizza>;
+  toppings$: Observable<Topping[]>;
 
-  constructor( private store: Store<fromStore.ProductState>) {}
+  constructor(private store: Store<fromStore.ProductState>) {}
 
   ngOnInit() {
-    this.store.dispatch(new fromStore.LoadToppings());
-    this.pizza$ = this.store.select(fromStore.getSelectedPizza)
+    this.pizza$ = this.store.select(fromStore.getSelectedPizza).pipe(
+      tap((pizza: Pizza = null) => {
+        const pizzaExist = !!(pizza && pizza.toppings);
+        const toppings = pizzaExist
+          ? pizza.toppings.map(topping => topping.id)
+          : [];
+        this.store.dispatch(new fromStore.VisualiseToppings(toppings));
+      })
+    );
+    this.toppings$ = this.store.select(fromStore.getAllToppings);
+    this.visualise$ = this.store.select(fromStore.getPizzaVisualised);
   }
 
-  onSelect(event: number[]) {}
+  onSelect(event: number[]) {
+    this.store.dispatch(new fromStore.VisualiseToppings(event));
+  }
 
   onCreate(event: Pizza) {}
 
   onUpdate(event: Pizza) {}
 
   onRemove(event: Pizza) {
-    const remove = window.confirm('Are you sure?');
+    const remove = window.confirm("Are you sure?");
     if (remove) {
-
     }
   }
 }

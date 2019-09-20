@@ -2,40 +2,37 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs/Observable';
-import * as FromStore from '../../store';
+import * as fromStore from '../../store';
 import { Pizza } from '../../models/pizza.model';
 
 @Component({
-  selector: 'products',
-  styleUrls: ['products.component.scss'],
+  selector: "products",
+  styleUrls: ["products.component.scss"],
   template: `
     <div class="products">
       <div class="products__new">
-        <a
-          class="btn btn__ok"
-          routerLink="./new">
+        <a class="btn btn__ok" routerLink="./new">
           New Pizza
         </a>
       </div>
       <div class="products__list">
-        <div *ngIf="!((pizzas$ | async)?.length)">
+        <div *ngIf="!(pizzas$ | async)?.length">
           No pizzas | async, add one to get started.
         </div>
-        <pizza-item
-          *ngFor="let pizza of (pizzas$ | async)"
-          [pizza]="pizza">
+        <pizza-item *ngFor="let pizza of pizzas$ | async" [pizza]="pizza">
         </pizza-item>
       </div>
     </div>
-  `,
+  `
 })
 export class ProductsComponent implements OnInit {
   pizzas$: Observable<Pizza[]>;
 
-  constructor(private store: Store<FromStore.ProductState>) {}
+  constructor(private store: Store<fromStore.ProductState>) {}
 
   ngOnInit() {
-    this.pizzas$ = this.store.select<any>(FromStore.getAllPizzas);
-    this.store.dispatch(new FromStore.LoadPizzas());
+    this.pizzas$ = this.store.select<any>(fromStore.getAllPizzas);
+    this.store.dispatch(new fromStore.LoadToppings());
+    this.store.dispatch(new fromStore.LoadPizzas());
   }
 }
